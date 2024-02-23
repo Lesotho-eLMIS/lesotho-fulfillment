@@ -146,7 +146,8 @@ public class StockEventBuilder {
     return shipment
         .getLineItems()
         .stream()
-        .map(lineItem -> createLineItem(lineItem, orderables, destinationId))
+        .map(lineItem -> createLineItem(lineItem, orderables, destinationId, 
+          shipment.getSupplyingFacilityId(),shipment.getReceivingFacilityId()))
         .filter(lineItem -> lineItem.getQuantity() != 0)
         .collect(Collectors.toList());
   }
@@ -179,13 +180,27 @@ public class StockEventBuilder {
   }
 
   private StockEventLineItemDto createLineItem(ShipmentLineItem lineItem,
-      Map<VersionIdentityDto, OrderableDto> orderables, UUID destinationId) {
+      Map<VersionIdentityDto, OrderableDto> orderables, UUID destinationId, 
+      UUID supplyingFacility, UUID receiveingFacility) {
     StockEventLineItemDto dto = new StockEventLineItemDto();
     dto.setOccurredDate(dateHelper.getCurrentDate());
     dto.setDestinationId(destinationId);
 
-    //Added by Team Lesotho - for internal requisitions fulfillment
-    dto.setReasonId(configurationSettingService.getInternalTransferId());
+    //Added by Team Lesotho - for internal & external requisitions fulfillment
+    //If same geozone then internal transfer ... otherwise transfer in
+    FacilityDto fromFacility = facilityReferenceDataService.findOne(supplyingFacility);
+    FacilityDto toFacility = facilityReferenceDataService.findOne(receiveingFacility);
+    if (fromFacility != null && toFacility != null) {
+      if (fromFacility.getGeographicZone().equals(toFacility.getGeographicZone())) {
+        //internal transfer
+        dto.setReasonId(configurationSettingService.getInternalTransferId());
+      } else {
+        //external transfer i.e. transfer out
+        dto.setReasonId(configurationSettingService.getTransferOutReasonId());
+      }
+    }
+    
+    // End of addition
 
     final OrderableDto orderableDto = orderables.get(
         new VersionIdentityDto(lineItem.getOrderable()));

@@ -28,6 +28,7 @@ public class ConfigurationSettingService {
   private static final String RESONS_SUFFIX = "reasons.";
   static final String TRANSFER_IN = RESONS_SUFFIX + "transferIn";
   static final String INTERNAL_TRANSFER = RESONS_SUFFIX + "internalTransfer";
+  static final String TRANSFER_OUT = RESONS_SUFFIX + "transferOut";
   private static final String FTP_TRANSFER = "ftp.transfer.on.requisition.to.order";
   private static final String SEND_EMAIL = "send.email.on.requisition.to.order";
 
@@ -40,6 +41,10 @@ public class ConfigurationSettingService {
 
   public UUID getInternalTransferId() {
     return UUID.fromString(env.getProperty(INTERNAL_TRANSFER));
+  }
+
+  public UUID getTransferOutReasonId() {
+    return UUID.fromString(env.getProperty(TRANSFER_OUT));
   }
 
   public String getAllowFtpTransferOnRequisitionToOrder() {
