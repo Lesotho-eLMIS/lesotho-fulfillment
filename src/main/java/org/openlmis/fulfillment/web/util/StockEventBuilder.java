@@ -184,6 +184,9 @@ public class StockEventBuilder {
     dto.setOccurredDate(dateHelper.getCurrentDate());
     dto.setDestinationId(destinationId);
 
+    //Added by Team Lesotho - for internal requisitions fulfillment
+    dto.setReasonId(configurationSettingService.getInternalTransferId());
+
     final OrderableDto orderableDto = orderables.get(
         new VersionIdentityDto(lineItem.getOrderable()));
 
