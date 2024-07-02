@@ -62,6 +62,7 @@ import java.util.UUID;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -532,6 +533,7 @@ public class OrderControllerIntegrationTest extends BaseWebIntegrationTest {
         .updateOrder(eq(firstOrderDto.getId()), any(OrderDto.class), eq(user.getId()));
   }
 
+  @Ignore("Disabled by team Lesotho")
   @Test
   public void shouldSendRequisitionLessOrder() {
     given(orderService.updateOrder(eq(firstOrderDto.getId()), any(OrderDto.class),

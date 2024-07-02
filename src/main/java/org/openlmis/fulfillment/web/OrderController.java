@@ -42,6 +42,7 @@ import org.openlmis.fulfillment.domain.Template;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.ExporterBuilder;
 import org.openlmis.fulfillment.service.FileTemplateService;
+import org.openlmis.fulfillment.service.FulfillmentNotificationService;
 import org.openlmis.fulfillment.service.JasperReportsViewService;
 import org.openlmis.fulfillment.service.OrderCsvHelper;
 import org.openlmis.fulfillment.service.OrderSearchParams;
@@ -110,6 +111,9 @@ public class OrderController extends BaseController {
 
   @Autowired
   private JasperReportsViewService jasperReportsViewService;
+
+  @Autowired
+  private FulfillmentNotificationService fulfillmentNotificationService;
 
   @Autowired
   private TemplateService templateService;
@@ -241,6 +245,9 @@ public class OrderController extends BaseController {
     order.prepareToLocalFulfill();
 
     orderRepository.save(order);
+
+    //send notifications
+    fulfillmentNotificationService.notifyRedistributionFacilities(orderDto);
   }
 
   /**

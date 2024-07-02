@@ -164,6 +164,13 @@ public abstract class MessageKeys {
   public static final String FULFILLMENT_EMAIL_POD_CONFIRMED_BODY
       = "fulfillment.email.podConfirmed.body";
 
+  public static final String FULFILLMENT_EMAIL_REDISTRIBUTION_SUBJECT
+      = "fulfillment.email.redistribution.subject";
+  public static final String FULFILLMENT_EMAIL_REDISTRIBUTION_RECEIVING_BODY
+      = "fulfillment.email.redistribution_receiving.body";
+  public static final String FULFILLMENT_EMAIL_REDISTRIBUTION_SUPPLYING_BODY
+      = "fulfillment.email.redistribution_supplying.body";
+
   private static final String ERROR_DTO_EXPANSION = join(ERROR_PREFIX, "dtoExpansion");
   public static final String ERROR_DTO_EXPANSION_CAST = join(ERROR_DTO_EXPANSION, "cast");
   public static final String ERROR_DTO_EXPANSION_HREF = join(ERROR_DTO_EXPANSION, "href");

@@ -20,25 +20,38 @@ import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_ORDER_
 import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_ORDER_CREATION_SUBJECT;
 import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_POD_CONFIRMED_BODY;
 import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_POD_CONFIRMED_SUBJECT;
+import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_REDISTRIBUTION_RECEIVING_BODY;
+import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_REDISTRIBUTION_SUBJECT;
+import static org.openlmis.fulfillment.i18n.MessageKeys.FULFILLMENT_EMAIL_REDISTRIBUTION_SUPPLYING_BODY;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.i18n.MessageService;
 import org.openlmis.fulfillment.service.notification.NotificationService;
 import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.RightDto;
+import org.openlmis.fulfillment.service.referencedata.RightReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.request.RequestParameters;
 import org.openlmis.fulfillment.util.Message;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -64,8 +77,14 @@ public class FulfillmentNotificationService {
   @Autowired
   protected MessageService messageService;
 
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
+
   @Value("${publicUrl}")
   private String publicUrl;
+
+  @Value("${email.urlToViewOrder}")
+  private String urlToViewOrder;
   
   /**
    * Send notification to the shipper of the associated Proof of Delivery informing them that the
@@ -149,5 +168,78 @@ public class FulfillmentNotificationService {
       throw new IllegalStateException("Can't get access to getter method", exp);
     }
     return content;
+  }
+
+  /**
+   * Send notification to the requesting facility.
+   *
+   */
+  @Async
+  public void notifyRedistributionFacilities(OrderDto order) {
+    // get rightId
+    RightDto right = rightReferenceDataService.findRight("LOTS_MANAGE");
+    UUID rightId = right.getId();
+    // get users
+    Collection<UserDto> usersReceivingFacility = getReceipients(order.getReceivingFacility().getId());
+    Collection<UserDto> usersSupplyingFacility = getReceipients(order.getSupplyingFacility().getId());
+    
+    for (UserDto user : usersReceivingFacility) {
+      if (userReferenceDataService.hasRight(user.getId(),
+          rightId, null, null, null).getResult().booleanValue()) {
+        Map<String, String> valuesMap = constructSubstitutionMap(
+            user, order);
+        StrSubstitutor sub = new StrSubstitutor(valuesMap);
+        notificationService.notify(user,
+            getMessage(FULFILLMENT_EMAIL_REDISTRIBUTION_SUBJECT),
+            sub.replace(getMessage(FULFILLMENT_EMAIL_REDISTRIBUTION_RECEIVING_BODY)));
+      } 
+    }
+
+    for (UserDto user : usersSupplyingFacility) {
+      if (userReferenceDataService.hasRight(user.getId(),
+          rightId, null, null, null).getResult().booleanValue()) {
+        Map<String, String> valuesMap = constructSubstitutionMap(
+            user, order);
+        StrSubstitutor sub = new StrSubstitutor(valuesMap);
+        System.out.println("Sending notification to: " + user.getUsername() + " "
+            + user.getFirstName() + " " + user.getLastName());
+        notificationService.notify(user,
+            getMessage(FULFILLMENT_EMAIL_REDISTRIBUTION_SUBJECT),
+            sub.replace(getMessage(FULFILLMENT_EMAIL_REDISTRIBUTION_SUPPLYING_BODY)));
+      }
+    }
+    // for each user, filter by rightId, notify
+  }
+
+  private Collection<UserDto> getReceipients(UUID homeFacilityId) {
+    RequestParameters parameters = RequestParameters.init()
+        .set("active", true)
+        .set("homeFacilityId", homeFacilityId);
+    return userReferenceDataService
+        .search(parameters);
+  }
+
+  Map<String, String> constructSubstitutionMap(UserDto user, 
+      OrderDto order) {
+    Map<String, String> valuesMap = new HashMap<>();
+    valuesMap.put("userName", user.getUsername());
+    valuesMap.put("firstName", user.getFirstName());
+    valuesMap.put("lastName", user.getLastName());
+    valuesMap.put("supplyingFacility", order.getSupplyingFacility().getName());
+    valuesMap.put("receivingFacility", order.getReceivingFacility().getName());
+    valuesMap.put("approver", order.getCreatedBy().getFirstName() 
+        + " " + order.getCreatedBy().getLastName());
+    valuesMap.put("urlToViewOrder", getUrlToViewOrder(order.getId()));
+    return valuesMap;
+  }
+
+  private String getMessage(String key) {
+    return messageService
+            .localize(new Message(key))
+            .getMessage();
+  }
+
+  String getUrlToViewOrder(UUID orderId) {
+    return MessageFormat.format(urlToViewOrder, orderId);
   }
 }

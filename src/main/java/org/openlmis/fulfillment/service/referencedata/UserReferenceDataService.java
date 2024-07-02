@@ -95,4 +95,14 @@ public class UserReferenceDataService extends BaseReferenceDataService<UserDto> 
     }
     return getPage(RequestParameters.init().set("id", ids)).getContent();
   }
+
+  /**
+   * Finds users by their attributes.
+   *
+   * @param parameters parameters to look for.
+   * @return a page of users
+   */
+  public Collection<UserDto> search(RequestParameters parameters) {
+    return getPage(parameters).getContent();
+  }
 }
