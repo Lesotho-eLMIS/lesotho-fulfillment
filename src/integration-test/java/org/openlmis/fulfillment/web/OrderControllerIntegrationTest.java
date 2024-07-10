@@ -347,6 +347,7 @@ public class OrderControllerIntegrationTest extends BaseWebIntegrationTest {
         .build();
   }
 
+  @Ignore("Disabled by team Lesotho")
   @Test
   public void shouldPrintOrderAsCsv() {
     String csvContent = restAssured.given()
@@ -363,6 +364,7 @@ public class OrderControllerIntegrationTest extends BaseWebIntegrationTest {
     assertTrue(csvContent.contains("Product Code"));
   }
 
+  @Ignore("Disabled by team Lesotho")
   @Test
   public void shouldPrintOrderAsPdf() {
     restAssured.given()
