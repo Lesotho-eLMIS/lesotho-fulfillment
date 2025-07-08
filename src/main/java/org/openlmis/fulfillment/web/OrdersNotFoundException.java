@@ -13,22 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.fulfillment;
+package org.openlmis.fulfillment.web;
 
-import org.javers.common.date.DateProvider;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDateTime;
+import java.util.Set;
+import org.openlmis.fulfillment.i18n.MessageKeys;
 
-/**
- * This class may be used by JaVers to retrieve the LocalDateTime that it associates with commits.
- * It is intended to be used, rather than JaVers' default DateProvider, so as to be explicit and
- * consistent with the use of UTC within JaVers' domain. (Otherwise, JaVers uses the default
- * system timezone, which may change, when constructing a LocalDateTime.)
- */
-public class JaVersDateProvider implements DateProvider {
-  private static final DateTimeZone DATE_TIME_ZONE = DateTimeZone.UTC;
+public class OrdersNotFoundException extends NotFoundException {
+  public OrdersNotFoundException(String messageKey, String... params) {
+    super(messageKey, params);
+  }
 
-  public LocalDateTime now() {
-    return LocalDateTime.now(DATE_TIME_ZONE);
+  public static OrdersNotFoundException newExceptionWithUuids(Set<String> uuids) {
+    return new OrdersNotFoundException(MessageKeys.ORDER_NOT_FOUND_OR_WRONG_STATUS,
+        uuids.toArray(new String[uuids.size()]));
   }
 }

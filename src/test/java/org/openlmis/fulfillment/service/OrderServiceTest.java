@@ -27,6 +27,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.fulfillment.service.PermissionService.ORDERS_EDIT;
@@ -63,6 +64,7 @@ import org.openlmis.fulfillment.domain.FtpTransferProperties;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderNumberConfiguration;
+import org.openlmis.fulfillment.domain.OrderStatsData;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.StatusChange;
 import org.openlmis.fulfillment.domain.TransferType;
@@ -284,7 +286,8 @@ public class OrderServiceTest {
 
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
-        order.getProcessingPeriodId(), Sets.newHashSet(order.getStatus().toString()), null, null
+        order.getProcessingPeriodId(), Sets.newHashSet(order.getStatus().toString()), null, null,
+        null
     );
     when(orderRepository.searchOrders(
         params, asSet(order.getProcessingPeriodId()),
@@ -314,7 +317,8 @@ public class OrderServiceTest {
 
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
-        order.getProcessingPeriodId(), Sets.newHashSet(order.getStatus().toString()), null, null);
+        order.getProcessingPeriodId(), Sets.newHashSet(order.getStatus().toString()), null, null,
+        null);
     when(orderRepository.searchOrders(
         params, asSet(order.getProcessingPeriodId()), pageable))
         .thenReturn(new PageImpl<>(Collections.singletonList(order), pageable, 1));
@@ -342,7 +346,7 @@ public class OrderServiceTest {
 
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
-        null, Sets.newHashSet(order.getStatus().toString()), startDate, endDate);
+        null, Sets.newHashSet(order.getStatus().toString()), startDate, endDate, null);
     when(orderRepository.searchOrders(
         params, asSet(period1.getId(), period2.getId()), pageable))
         .thenReturn(new PageImpl<>(Collections.singletonList(order), pageable, 1));
@@ -367,7 +371,7 @@ public class OrderServiceTest {
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
         order.getProcessingPeriodId(), Sets.newHashSet(order.getStatus().toString()),
-        startDate, endDate);
+        startDate, endDate, null);
     Page<Order> receivedOrders = orderService.searchOrders(params, pageable);
 
     assertEquals(0, receivedOrders.getContent().size());
@@ -387,7 +391,7 @@ public class OrderServiceTest {
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
         null, Sets.newHashSet(order.getStatus().toString()),
-        startDate, endDate);
+        startDate, endDate, null);
     Page<Order> receivedOrders = orderService.searchOrders(params, pageable);
 
     assertEquals(0, receivedOrders.getContent().size());
@@ -402,7 +406,7 @@ public class OrderServiceTest {
 
     OrderSearchParams params = new OrderSearchParams(
         order.getSupplyingFacilityId(), order.getRequestingFacilityId(), order.getProgramId(),
-        period1.getId(), Sets.newHashSet(order.getStatus().toString()), startDate, endDate);
+        period1.getId(), Sets.newHashSet(order.getStatus().toString()), startDate, endDate, null);
     when(orderRepository.searchOrders(
         params, asSet(period1.getId()), pageable))
         .thenReturn(new PageImpl<>(Collections.singletonList(order), pageable, 1));
@@ -475,6 +479,21 @@ public class OrderServiceTest {
 
     exception.expect(ValidationException.class);
     orderService.updateOrder(order.getId(), dto, userDto.getId());
+  }
+
+  @Test
+  public void shouldReturnOrderStatsData() {
+    // given
+    int numberOfStatuses = OrderStatus.values().length;
+
+    // when
+    OrderStatsData result = orderService.getStatusesStatsData(userDto.getHomeFacilityId());
+
+    // then
+    verify(orderRepository, times(numberOfStatuses))
+        .countByFacilityIdAndStatus(anyObject(), anyObject());
+    assertEquals(userDto.getHomeFacilityId(), result.getFacilityId());
+    assertEquals(numberOfStatuses, result.getStatusesStats().size());
   }
 
   private Order generateOrder() {

@@ -1,3 +1,57 @@
+Upcoming Version / (WIP)
+==================
+
+9.2.1 / 2025-04-03
+==================
+
+Improvements:
+* [SELVSUP-43](https://openlmis.atlassian.net/browse/SELVSUP-43): Add Reason Assignment for Stock Event Line Item Creation During Shipment.
+  * Introduced a new variable in the `.env` file: `SHIPMENT_REASON_ID`. Default is set to `null`; if provided, the reason will be used during shipment creation.
+  * Renamed the existing `TRANSFER_IN_REASON_ID` in the `.env` file, used in Stock Event Line Item Creation During Proof of Delivery to `POD_REASON_ID`. The default reason ID remains unchanged (`e3fc3cf3-da18-44b0-a220-77c985202e06`).
+
+9.2.0 / 2025-03-31
+==================
+
+Minor coverage updates and code analysis improvements.
+
+Bug fixes:
+* [SELV3-802](https://openlmis.atlassian.net/browse/SELV3-802): Allow user both fulfillment and PoD management
+
+9.1.0 / 2025-02-03
+==================
+
+Improvements:
+* [OPSD-20](https://openlmis.atlassian.net/browse/OPSD-20): Allow empty shipments and proof of deliveries, new ALLOW_EMPTY_SHIPMENT env variable.
+
+9.0.7 / 2024-10-31
+==================
+
+Patch release with performance improvements.
+
+Improvements:
+* [SELV3-774](https://openlmis.atlassian.net/browse/SELV3-774): Improved general performance of all create and update
+ actions
+
+9.0.6 / 2024-10-31
+==================
+
+New functionality added in a backwards-compatible manner:
+* [SELV3-705](https://openlmis.atlassian.net/browse/SELV3-705): Add GET `api/orders/numberOfOrdersData` endpoint
+* [OAM-17](https://openlmis.atlassian.net/browse/OAM-17): Add Homepage UI alerts
+  * GET `/api/requisitions/statusesStatsData` endpoint
+    * Number of Requisitions to be created for the month
+    * Updates on requisitions (e.g.: approved, rejected, submitted, etc.)
+* [OLMIS-7987](https://openlmis.atlassian.net/browse/OLMIS-7987): Incorporate OAM-200. Add DELETE `api/orders` endpoint
+
+Improvements:
+* [OLMIS-8002](https://openlmis.atlassian.net/browse/OLMIS-8002): Proof of delivery - improved performance
+* [OAM-90](https://openlmis.atlassian.net/browse/OAM-90): Endpoint GET `/api/orders` has now an optional `requisitionless` parameter
+* [OIS-14](https://openlmis.atlassian.net/browse/OIS-14): Upgrade Transifex API version
+* [OIS-48](https://openlmis.atlassian.net/browse/OIS-48): Update service base images to versions without known vulnerabilities
+
+9.0.5 / 2023-12-12
+==================
+
 9.0.4 / 2022-10-07
 ==================
 

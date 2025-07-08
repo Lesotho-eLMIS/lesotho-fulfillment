@@ -51,7 +51,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
     compile "org.projectlombok:lombok"
-    compile "org.postgresql:postgresql:42.0.0"
+    compile "org.postgresql:postgresql:42.6.2"
     compile "org.springframework:spring-test"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
@@ -79,8 +79,9 @@ dependencies {
     compile 'org.apache.commons:commons-collections4:4.1'
     compile 'org.apache.commons:commons-lang3'
     compile 'org.apache.commons:commons-csv:1.4'
-    compile 'org.javers:javers-spring-boot-starter-sql:2.8.2'
+    compile 'org.javers:javers-spring-boot-starter-sql:5.13.2'
     compile "org.slf4j:slf4j-ext"
+    compile 'com.google.guava:guava:33.3.1-jre'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     compile group: 'org.apache.poi', name: 'poi', version: '3.15'
@@ -203,6 +204,7 @@ configure(checkApiIsRaml) {
 }
 
 jacocoTestReport {
+    dependsOn integrationTest, test
     group = "reporting"
     description = "Generate Jacoco coverage reports after running tests."
     reports {
@@ -211,7 +213,8 @@ jacocoTestReport {
         csv.enabled false
     }
 
-    additionalSourceDirs(files(sourceSets.main.allJava.srcDirs))
+    executionData file("$buildDir/jacoco/test.exec"), file("$buildDir/jacoco/integrationTest.exec")
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
 }
 
 checkstyle {
