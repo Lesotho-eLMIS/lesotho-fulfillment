@@ -81,8 +81,9 @@ public class StockEventBuilder {
 
   /**
    * Builds a stock event DTO from the given shipment.
+   * Returns empty result, if there are no Stock changes for the given {@code shipment}.
    */
-  public StockEventDto fromShipment(Shipment shipment) {
+  public Optional<StockEventDto> fromShipment(Shipment shipment) {
     XLOGGER.entry(shipment);
     Profiler profiler = new Profiler("BUILD_STOCK_EVENT_FROM_SHIPMENT");
     profiler.setLogger(XLOGGER);
@@ -97,13 +98,14 @@ public class StockEventBuilder {
 
     profiler.stop().log();
     XLOGGER.exit(stockEventDto);
-    return stockEventDto;
+    return stockEventDto.getLineItems().isEmpty() ? Optional.empty() : Optional.of(stockEventDto);
   }
 
   /**
    * Builds a stock event DTO from the given proof of delivery.
+   * Returns empty result, if there are no Stock changes for the given {@code proofOfDelivery}.
    */
-  public StockEventDto fromProofOfDelivery(ProofOfDelivery proofOfDelivery) {
+  public Optional<StockEventDto> fromProofOfDelivery(ProofOfDelivery proofOfDelivery) {
     XLOGGER.entry(proofOfDelivery);
     Profiler profiler = new Profiler("BUILD_STOCK_EVENT_FROM_POD");
     profiler.setLogger(XLOGGER);
@@ -121,7 +123,7 @@ public class StockEventBuilder {
 
     profiler.stop().log();
     XLOGGER.exit(stockEventDto);
-    return stockEventDto;
+    return stockEventDto.getLineItems().isEmpty() ? Optional.empty() : Optional.of(stockEventDto);
   }
 
   private List<StockEventLineItemDto> getLineItems(Shipment shipment, Profiler profiler) {
@@ -176,6 +178,7 @@ public class StockEventBuilder {
         .getLineItems()
         .stream()
         .map(lineItem -> createLineItem(proofOfDelivery, lineItem, orderables, sourceId))
+        .filter(lineItem -> lineItem.getQuantity() != 0)
         .collect(Collectors.toList());
   }
 
@@ -185,6 +188,7 @@ public class StockEventBuilder {
     StockEventLineItemDto dto = new StockEventLineItemDto();
     dto.setOccurredDate(dateHelper.getCurrentDate());
     dto.setDestinationId(destinationId);
+    dto.setReasonId(configurationSettingService.getReasonIdForShipment());
 
     //Added by Team Lesotho - for internal & external requisitions fulfillment
     //If same geozone then internal transfer ... otherwise transfer in
@@ -218,7 +222,7 @@ public class StockEventBuilder {
     StockEventLineItemDto dto = new StockEventLineItemDto();
     dto.setOccurredDate(proofOfDelivery.getReceivedDate());
     dto.setSourceId(sourceId);
-    dto.setReasonId(configurationSettingService.getTransferInReasonId());
+    dto.setReasonId(configurationSettingService.getReasonIdForProofOfDelivery());
 
     final OrderableDto orderableDto = orderables.get(
         new VersionIdentityDto(lineItem.getOrderable()));

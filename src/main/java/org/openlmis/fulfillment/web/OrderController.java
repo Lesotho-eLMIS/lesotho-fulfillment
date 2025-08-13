@@ -17,6 +17,7 @@ package org.openlmis.fulfillment.web;
 
 import static org.openlmis.fulfillment.domain.OrderStatus.TRANSFER_FAILED;
 import static org.openlmis.fulfillment.i18n.MessageKeys.ORDER_EXISTS;
+import static org.openlmis.fulfillment.i18n.MessageKeys.ORDER_NOT_FOUND_OR_WRONG_STATUS;
 import static org.openlmis.fulfillment.i18n.MessageKeys.ORDER_RETRY_INVALID_STATUS;
 
 import com.google.common.collect.ImmutableMap;
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.openlmis.fulfillment.domain.CreationDetails;
 import org.openlmis.fulfillment.domain.FileTemplate;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatsData;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.Template;
@@ -55,6 +59,7 @@ import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
+import org.openlmis.fulfillment.web.util.IdsDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderReportDto;
@@ -74,6 +79,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -90,10 +96,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @SuppressWarnings("PMD.TooManyMethods")
 public class OrderController extends BaseController {
 
+  public static final String CREATING = "CREATING";
   private static final XLogger XLOGGER = XLoggerFactory.getXLogger(OrderController.class);
   private static final String DISPOSITION_BASE = "attachment; filename=";
   private static final String TYPE_CSV = "csv";
-
   @Autowired
   private OrderRepository orderRepository;
 
@@ -196,16 +202,16 @@ public class OrderController extends BaseController {
   /**
    * Allows updating orders.
    *
-   * @param orderId UUID of order which we want to update
+   * @param orderId  UUID of order which we want to update
    * @param orderDto An order bound to the request body
    * @return updated order
    */
   @PutMapping("/orders/{id}")
   @ResponseBody
   public OrderDto updateOrder(
-          @PathVariable("id") UUID orderId,
-          @RequestBody OrderDto orderDto,
-          BindingResult bindingResult
+      @PathVariable("id") UUID orderId,
+      @RequestBody OrderDto orderDto,
+      BindingResult bindingResult
   ) {
     permissionService.canCreateOrder(orderDto);
 
@@ -223,15 +229,15 @@ public class OrderController extends BaseController {
   /**
    * Send requisition-less order.
    *
-   * @param orderId UUID of order
+   * @param orderId  UUID of order
    * @param orderDto An order bound to the request body
    */
   @PutMapping("/orders/{id}/requisitionLess/send")
   @ResponseBody
   public void sendRequisitionLessOrder(
-          @PathVariable("id") UUID orderId,
-          @RequestBody OrderDto orderDto,
-          BindingResult bindingResult
+      @PathVariable("id") UUID orderId,
+      @RequestBody OrderDto orderDto,
+      BindingResult bindingResult
   ) {
     permissionService.canCreateOrder(orderDto);
 
@@ -261,7 +267,7 @@ public class OrderController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public Iterable<BasicOrderDto> batchCreateOrders(@RequestBody List<OrderDto> orders,
-      OAuth2Authentication authentication) {
+                                                   OAuth2Authentication authentication) {
     List<Order> newOrders = orders
         .stream()
         .map(order -> createSingleOrder(order, authentication))
@@ -314,10 +320,31 @@ public class OrderController extends BaseController {
   }
 
   /**
+   * Get information about number of orders of each status for user's home facility.
+   *
+   * @return Orders statistics data.
+   */
+  @GetMapping("/orders/statusesStatsData")
+  @ResponseBody
+  public OrderStatsData getOrderStatusesStatsData() {
+    Profiler profiler = new Profiler("GET_ORDER_STATISTICS_DATA");
+    profiler.setLogger(XLOGGER);
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (facilityId == null) {
+      return new OrderStatsData();
+    }
+    profiler.start("COUNT_ORDERS_STATUSES_DATA");
+    OrderStatsData orderStatusesData = orderService.getStatusesStatsData(facilityId);
+
+    profiler.stop().log();
+    return orderStatusesData;
+  }
+
+  /**
    * Get chosen order.
    *
    * @param orderId UUID of order whose we want to get
-   * @param expand a set of field names to expand
+   * @param expand  a set of field names to expand
    * @return OrderDto.
    */
   @RequestMapping(value = "/orders/{id}", method = RequestMethod.GET)
@@ -341,7 +368,7 @@ public class OrderController extends BaseController {
   @ResponseBody
   public List<UUID> getRequestingFacilities(
       @RequestParam(name = "supplyingFacilityId", required = false)
-          List<UUID> supplyingFacilityIds) {
+      List<UUID> supplyingFacilityIds) {
     return orderRepository.getRequestingFacilities(supplyingFacilityIds);
   }
 
@@ -354,7 +381,8 @@ public class OrderController extends BaseController {
   @RequestMapping(value = "/orders/{id}/print", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<byte[]> printOrder(@PathVariable("id") UUID orderId,
-                                 @RequestParam("format") String format) throws IOException {
+                                           @RequestParam("format") String format)
+      throws IOException {
 
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -417,9 +445,9 @@ public class OrderController extends BaseController {
   @RequestMapping(value = "/orders/{id}/export", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public void export(@PathVariable("id") UUID orderId,
-      @RequestParam(value = "type", required = false,
-          defaultValue = TYPE_CSV) String type,
-      HttpServletResponse response) throws IOException {
+                     @RequestParam(value = "type", required = false,
+                         defaultValue = TYPE_CSV) String type,
+                     HttpServletResponse response) throws IOException {
     if (!TYPE_CSV.equals(type)) {
       String msg = "Export type: " + type + " not allowed";
       XLOGGER.warn(msg);
@@ -480,6 +508,48 @@ public class OrderController extends BaseController {
 
     orderService.save(order);
     return new ResultDto<>(TRANSFER_FAILED != order.getStatus());
+  }
+
+  /**
+   * Delete multiple orders with status CREATING.
+   *
+   * @param idsDto ids of orders to be deleted, should not be empty
+   */
+  @RequestMapping(value = "/orders", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteMultipleOrders(@RequestBody IdsDto idsDto) {
+
+    List<UUID> ids = idsDto.getIds();
+    if (CollectionUtils.isEmpty(ids)) {
+      XLOGGER.info("Nothing to delete");
+      throw new ValidationException("no ids given");
+    }
+    List<Order> foundOrders = orderRepository.findByIdInAndStatus(ids, OrderStatus.CREATING);
+    if (foundOrders == null) {
+      throw new OrdersNotFoundException(ORDER_NOT_FOUND_OR_WRONG_STATUS);
+    } else if (foundOrders.size() < ids.size()) {
+      Set<UUID> foundOrderIds = foundOrders.stream()
+          .map(Order::getId)
+          .collect(Collectors.toSet());
+      Set<String> errorIds = ids.stream()
+          .filter(id -> !foundOrderIds.contains(id))
+          .map(UUID::toString)
+          .collect(Collectors.toSet());
+      throw OrdersNotFoundException.newExceptionWithUuids(errorIds);
+    }
+
+    List<UUID> receivingIds = new ArrayList<>();
+    List<UUID> ordersToDeleteIds = new ArrayList<>();
+    foundOrders.forEach(order -> {
+      receivingIds.add(order.getReceivingFacilityId());
+      ordersToDeleteIds.add(order.getId());
+    });
+
+    permissionService.canDeleteOrders(receivingIds);
+
+    for (UUID id : ordersToDeleteIds) {
+      orderRepository.deleteById(id);
+    }
   }
 
   private Order createSingleOrder(OrderDto orderDto,
