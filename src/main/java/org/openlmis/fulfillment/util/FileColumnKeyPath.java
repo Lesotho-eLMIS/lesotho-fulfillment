@@ -26,7 +26,8 @@ public enum FileColumnKeyPath {
   ORDER_ID("orderId"),
   ORDER_CODE("orderCode"),
 
-  QUANTITY_SHIPPED("quantityShipped");
+  QUANTITY_SHIPPED("quantityShipped"),
+  QUANTITY_TYPE("quantityType");
 
   private String columnPath;
 
@@ -38,6 +39,9 @@ public enum FileColumnKeyPath {
 
   public static final ImmutableList<FileColumnKeyPath> QUANTITY_SHIPPED_PATHS = ImmutableList
       .of(QUANTITY_SHIPPED);
+
+  public static final ImmutableList<FileColumnKeyPath> QUANTITY_TYPE_PATHS = ImmutableList
+      .of(QUANTITY_TYPE);
 
   public static final ImmutableList<FileColumnKeyPath> ALL_REQUIRED_COLUMN_PATHS = ImmutableList
       .of(ORDERABLE_ID, ORDERABLE_VERSION_NUMBER, PRODUCT_CODE, ORDER_ID, ORDER_CODE,

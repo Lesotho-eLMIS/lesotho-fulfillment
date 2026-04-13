@@ -69,7 +69,8 @@ schemas:
           "lineItems": [{
               "orderable": {"id": "2a3484ce-4e45-46b1-901e-19a4fd770f73"},
               "lot": {"id": "1d16ed3d-d4e5-474d-99fc-0ece0f5ddd67"},
-              "quantityShipped": 20
+              "quantityShipped": 20,
+              "quantityType": "PACKS"
           }]
       }
 

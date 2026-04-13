@@ -26,6 +26,7 @@ import org.openlmis.fulfillment.OrderDataBuilder;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.testutils.ShipmentDraftDataBuilder;
 import org.openlmis.fulfillment.testutils.ShipmentDraftLineItemDataBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +100,19 @@ public class ShipmentDraftRepositoryIntegrationTest
     drafts = shipmentDraftRepository.findByOrder(anotherOrder);
     assertEquals(1, drafts.size());
     assertEquals(anotherOrder.getId(), drafts.iterator().next().getOrder().getId());
+  }
+
+  @Test
+  public void shouldPersistQuantityType() {
+    shipmentLineItem = new ShipmentDraftLineItemDataBuilder()
+        .withoutId()
+        .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+        .build();
+
+    ShipmentDraft save = shipmentDraftRepository.save(generateInstance());
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS,
+        save.viewLineItems().get(0).getQuantityType());
   }
 
   private ShipmentDraft generateInstanceWithOrder(Order order) {

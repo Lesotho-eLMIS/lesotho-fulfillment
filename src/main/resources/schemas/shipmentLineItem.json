@@ -17,6 +17,11 @@
     "quantityShipped": {
       "type": "integer",
       "title": "quantity shipped"
+    },
+    "quantityType": {
+      "type": "string",
+      "title": "quantity type",
+      "enum": ["PACKS", "DISPENSING_UNITS"]
     }
   },
   "required": [

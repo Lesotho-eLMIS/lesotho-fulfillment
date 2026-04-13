@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVRecord;
@@ -32,6 +33,7 @@ import org.openlmis.fulfillment.FileColumnBuilder;
 import org.openlmis.fulfillment.FileTemplateBuilder;
 import org.openlmis.fulfillment.domain.FileColumn;
 import org.openlmis.fulfillment.domain.FileTemplate;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.TemplateType;
 import org.openlmis.fulfillment.service.FulfillmentException;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -54,6 +56,7 @@ public class ShipmentLineItemBuilderTest {
   private static final String ORDER_CODE = "O0001";
   private static final String ORDER_CODE_2 = "O0002";
   private static final String QUANTITY_SHIPPED = "1000";
+  private static final String QUANTITY_TYPE = "DISPENSING_UNITS";
   private static final String BATCH_NUMBER = "1234";
   private static final Long VERSION_NUMBER = 1L;
 
@@ -88,6 +91,7 @@ public class ShipmentLineItemBuilderTest {
     when(csvRecord1.get(1)).thenReturn(ORDERABLE_ID);
     when(csvRecord1.get(2)).thenReturn(QUANTITY_SHIPPED);
     when(csvRecord1.get(3)).thenReturn(BATCH_NUMBER);
+    when(csvRecord1.get(4)).thenReturn(QUANTITY_TYPE);
   }
 
   private FileTemplate mockTemplate(FileColumnKeyPath orderableField) {
@@ -106,10 +110,13 @@ public class ShipmentLineItemBuilderTest {
     FileColumn batchNumber = columnBuilder
         .withPosition(3).withNested("lineItem")
         .withKeyPath("batchNumber").build();
+    FileColumn quantityType = columnBuilder
+        .withPosition(4).withNested("lineItem")
+        .withKeyPath(FileColumnKeyPath.QUANTITY_TYPE.toString()).build();
 
     return templateBuilder
         .withTemplateType(TemplateType.SHIPMENT)
-        .withFileColumns(asList(orderCode, orderableId, quantityShipped, batchNumber))
+        .withFileColumns(asList(orderCode, orderableId, quantityShipped, batchNumber, quantityType))
         .build();
   }
 
@@ -119,6 +126,25 @@ public class ShipmentLineItemBuilderTest {
 
     assertThat(result.getLineItems().size(), is(1));
     assertThat(result.getLineItems().get(0).getOrderable().getId().toString(), is(ORDERABLE_ID));
+  }
+
+  @Test
+  public void buildShouldDefaultQuantityTypeToPacksWhenColumnMissing() {
+    template.setFileColumns(new ArrayList<>(template.getFileColumns().stream()
+        .filter(c -> !FileColumnKeyPath.QUANTITY_TYPE.equals(c.getFileColumnKeyPathEnum()))
+        .collect(Collectors.toList())));
+
+    ImportedShipmentLineItemData result = builder.build(template, asList(csvRecord1));
+
+    assertThat(result.getLineItems().get(0).getQuantityType(), is(ShipmentQuantityType.PACKS));
+  }
+
+  @Test
+  public void buildShouldParseQuantityType() {
+    ImportedShipmentLineItemData result = builder.build(template, asList(csvRecord1));
+
+    assertThat(result.getLineItems().get(0).getQuantityType(),
+        is(ShipmentQuantityType.DISPENSING_UNITS));
   }
 
   @Test

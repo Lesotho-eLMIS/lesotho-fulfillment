@@ -19,6 +19,7 @@ import static org.openlmis.fulfillment.i18n.MessageKeys.EVENT_MISSING_SOURCE_DES
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +30,7 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.ConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
@@ -211,7 +213,7 @@ public class StockEventBuilder {
 
     dto.setOrderableId(orderableDto.getId());
     lineItem.export(dto, orderableDto);
-    convertQuantityToDispensingUnits(dto, orderableDto, orderables);
+    normalizeQuantityForStockEvent(dto, orderableDto, lineItem.getQuantityType());
 
     return dto;
   }
@@ -226,10 +228,18 @@ public class StockEventBuilder {
 
     final OrderableDto orderableDto = orderables.get(
         new VersionIdentityDto(lineItem.getOrderable()));
+    ShipmentQuantityType quantityType = proofOfDelivery.getShipment()
+        .getLineItems()
+        .stream()
+        .filter(shipped -> shipped.getOrderable().equals(lineItem.getOrderable())
+            && Objects.equals(shipped.getLotId(), lineItem.getLotId()))
+        .map(ShipmentLineItem::getQuantityType)
+        .findFirst()
+        .orElse(ShipmentQuantityType.PACKS);
 
     dto.setOrderableId(orderableDto.getId());
     lineItem.export(dto, orderableDto);
-    convertQuantityToDispensingUnits(dto, orderableDto, orderables);
+    normalizeQuantityForStockEvent(dto, orderableDto, quantityType);
 
     return dto;
   }
@@ -242,19 +252,14 @@ public class StockEventBuilder {
         .collect(Collectors.toMap(OrderableDto::getIdentity, orderable -> orderable));
   }
 
-  private void convertQuantityToDispensingUnits(StockEventLineItemDto dto,
-      OrderableDto orderableDto, Map<VersionIdentityDto, OrderableDto> orderables) {
-    VersionIdentityDto dtoIdentifier = new VersionIdentityDto(
-        dto.getOrderableId(), orderableDto.getVersionNumber());
-
-    orderables.computeIfPresent(dtoIdentifier,
-        (identity, orderable) -> {
-        Long netContent = orderables.get(new VersionIdentityDto(
-            dto.getOrderableId(), orderable.getVersionNumber())).getNetContent();
-        dto.setQuantity((int) (dto.getQuantity() * netContent));
-        return orderable;
-      });
-
+  private void normalizeQuantityForStockEvent(StockEventLineItemDto dto,
+      OrderableDto orderableDto, ShipmentQuantityType quantityType) {
+    ShipmentQuantityType resolvedQuantityType = quantityType == null
+        ? ShipmentQuantityType.PACKS
+        : quantityType;
+    if (ShipmentQuantityType.PACKS == resolvedQuantityType) {
+      dto.setQuantity((int) (dto.getQuantity() * orderableDto.getNetContent()));
+    }
   }
 
   private UUID getDestinationId(UUID source, UUID destination, UUID programId) {

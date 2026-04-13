@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
@@ -60,6 +61,10 @@ public final class ShipmentLineItemDto
   @Getter
   @Setter
   private Long quantityShipped;
+
+  @Getter
+  @Setter
+  private ShipmentQuantityType quantityType;
 
   @Getter
   @Setter

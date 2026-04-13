@@ -31,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.naming.VvmStatus;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -103,6 +104,12 @@ public final class StockEventLineItemDto
   @JsonIgnore
   public void setQuantityShipped(Long quantityShipped) {
     quantity = Math.toIntExact(quantityShipped);
+  }
+
+  @Override
+  @JsonIgnore
+  public void setQuantityType(ShipmentQuantityType quantityType) {
+    // nothing to do here
   }
 
   @Override

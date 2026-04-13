@@ -82,4 +82,8 @@ public final class ProofOfDeliveryDto
     return null == lineItems ? null : new ArrayList<>(lineItems);
   }
 
+  public List<ProofOfDeliveryLineItemDto> lineItems() {
+    return lineItems;
+  }
+
 }

@@ -18,6 +18,7 @@ package org.openlmis.fulfillment.testutils;
 import java.util.Random;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 
 public class ShipmentDraftLineItemDataBuilder {
@@ -26,6 +27,7 @@ public class ShipmentDraftLineItemDataBuilder {
   private VersionEntityReference orderable = new VersionEntityReference(UUID.randomUUID(), 1L);
   private UUID lotId = UUID.randomUUID();
   private Long quantityShipped = new Random().nextLong();
+  private ShipmentQuantityType quantityType = ShipmentQuantityType.PACKS;
 
   public ShipmentDraftLineItemDataBuilder withId(UUID id) {
     this.id = id;
@@ -47,6 +49,11 @@ public class ShipmentDraftLineItemDataBuilder {
     return this;
   }
 
+  public ShipmentDraftLineItemDataBuilder withQuantityType(ShipmentQuantityType quantityType) {
+    this.quantityType = quantityType;
+    return this;
+  }
+
   public ShipmentDraftLineItemDataBuilder withoutId() {
     this.id = null;
     return this;
@@ -56,7 +63,8 @@ public class ShipmentDraftLineItemDataBuilder {
    * Builds instance of {@link ShipmentDraftLineItem}.
    */
   public ShipmentDraftLineItem build() {
-    ShipmentDraftLineItem line = new ShipmentDraftLineItem(orderable, lotId, quantityShipped);
+    ShipmentDraftLineItem line =
+        new ShipmentDraftLineItem(orderable, lotId, quantityShipped, quantityType);
     line.setId(id);
     return line;
   }

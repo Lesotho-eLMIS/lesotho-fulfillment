@@ -57,7 +57,7 @@ public class ProofOfDeliveryLineItem extends BaseEntity {
   private VersionEntityReference orderable;
 
   @Type(type = UUID_TYPE)
-  @Getter(AccessLevel.PACKAGE)
+  @Getter
   private UUID lotId;
 
   @Getter(AccessLevel.PACKAGE)

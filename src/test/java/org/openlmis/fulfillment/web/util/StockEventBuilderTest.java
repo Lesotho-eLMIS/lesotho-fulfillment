@@ -50,6 +50,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.ConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
@@ -72,6 +73,7 @@ import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventLineItemDto;
 import org.openlmis.fulfillment.web.stockmanagement.ValidSourceDestinationDto;
 import org.openlmis.fulfillment.web.stockmanagement.ValidSourceDestinationDtoDataBuilder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -190,6 +192,31 @@ public class StockEventBuilderTest {
   }
 
   @Test
+  public void shouldNotMultiplyShipmentQuantityAlreadyInDispensingUnits() {
+    Shipment shipment = new ShipmentDataBuilder().withOrder(order)
+        .withLineItems(singletonList(new ShipmentLineItemDataBuilder()
+            .withOrderable(proofOfDelivery.getLineItems().get(0).getOrderable().getId(),
+                proofOfDelivery.getLineItems().get(0).getOrderable().getVersionNumber())
+            .withQuantityShipped(500L)
+            .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+            .build()))
+        .build();
+    final OrderableDto orderable = new OrderableDataBuilder()
+        .withId(shipment.getLineItems().get(0).getOrderable().getId())
+        .withVersionNumber(shipment.getLineItems().get(0).getOrderable().getVersionNumber())
+        .withNetContent(NET_CONTENT)
+        .build();
+    when(orderableReferenceDataService.findByIdentities(Sets.asSet(new VersionEntityReference(
+        orderable.getId(), orderable.getVersionNumber()))))
+        .thenReturn(Lists.newArrayList(orderable));
+
+    Optional<StockEventDto> event = stockEventBuilder.fromShipment(shipment);
+
+    assertTrue("Should create an event.", event.isPresent());
+    assertThat(event.get().getLineItems().get(0).getQuantity(), is(500));
+  }
+
+  @Test
   public void shouldCreateEventFromProofOfDelivery() {
     final OrderableDto orderable = new OrderableDataBuilder()
         .withId(proofOfDelivery.getLineItems().get(0).getOrderable().getId())
@@ -222,6 +249,48 @@ public class StockEventBuilderTest {
     Optional<StockEventDto> event = stockEventBuilder.fromProofOfDelivery(proofOfDelivery);
 
     assertFalse("Should not create an event.", event.isPresent());
+  }
+
+  @Test
+  public void shouldNotMultiplyPodQuantityAlreadyInDispensingUnits() {
+    UUID orderableId = proofOfDelivery.getLineItems().get(0).getOrderable().getId();
+    Long versionNumber = proofOfDelivery.getLineItems().get(0).getOrderable().getVersionNumber();
+    UUID lotId = proofOfDelivery.getLineItems().get(0).getLotId();
+    Shipment shipment = new ShipmentDataBuilder().withOrder(order)
+        .withLineItems(singletonList(new ShipmentLineItemDataBuilder()
+            .withOrderable(orderableId, versionNumber)
+            .withLotId(lotId)
+            .withQuantityShipped(500L)
+            .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+            .build()))
+        .build();
+    org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem podLineItem =
+        new org.openlmis.fulfillment.ProofOfDeliveryLineItemDataBuilder()
+            .withOrderable(orderableId, versionNumber)
+            .withoutQuantities()
+            .withoutReason()
+            .withoutVvmStatus()
+            .build();
+    ReflectionTestUtils.setField(podLineItem, "lotId", lotId);
+    ReflectionTestUtils.setField(podLineItem, "quantityAccepted", 500);
+    ReflectionTestUtils.setField(podLineItem, "quantityRejected", 0);
+    ProofOfDelivery proofOfDelivery = new ProofOfDeliveryDataBuilder()
+        .withShipment(shipment)
+        .withLineItems(singletonList(podLineItem))
+        .build();
+    final OrderableDto orderable = new OrderableDataBuilder()
+        .withId(proofOfDelivery.getLineItems().get(0).getOrderable().getId())
+        .withVersionNumber(proofOfDelivery.getLineItems().get(0).getOrderable().getVersionNumber())
+        .withNetContent(NET_CONTENT)
+        .build();
+    when(orderableReferenceDataService.findByIdentities(Sets.asSet(new VersionEntityReference(
+        orderable.getId(), orderable.getVersionNumber()))))
+        .thenReturn(Lists.newArrayList(orderable));
+
+    Optional<StockEventDto> event = stockEventBuilder.fromProofOfDelivery(proofOfDelivery);
+
+    assertTrue("Should create an event.", event.isPresent());
+    assertThat(event.get().getLineItems().get(0).getQuantity(), is(500));
   }
 
   @Test
