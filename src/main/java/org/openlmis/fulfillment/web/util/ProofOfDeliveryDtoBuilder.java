@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
-import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentQuantityType;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +103,13 @@ public class ProofOfDeliveryDtoBuilder {
     return exportToDtos(lineItems, orderables, pod.getShipment().getLineItems());
   }
 
+  private List<ProofOfDeliveryLineItemDto> exportToDtos(List<ProofOfDeliveryLineItem> lineItems,
+      Map<VersionIdentityDto, OrderableDto> orderables, List<ShipmentLineItem> shipmentLineItems) {
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = new ArrayList<>(lineItems.size());
+    lineItems.forEach(l -> lineItemDtos.add(exportToDto(l, orderables, shipmentLineItems)));
+    return lineItemDtos;
+  }
+
   private ProofOfDeliveryLineItemDto exportToDto(ProofOfDeliveryLineItem lineItem,
       Map<VersionIdentityDto, OrderableDto> orderables, List<ShipmentLineItem> shipmentLineItems) {
     ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto();
@@ -114,13 +121,6 @@ public class ProofOfDeliveryDtoBuilder {
     lineItem.export(lineItemDto, orderableDto);
     lineItemDto.setQuantityType(resolveQuantityType(lineItem, shipmentLineItems));
     return lineItemDto;
-  }
-
-  private List<ProofOfDeliveryLineItemDto> exportToDtos(List<ProofOfDeliveryLineItem> lineItems,
-      Map<VersionIdentityDto, OrderableDto> orderables, List<ShipmentLineItem> shipmentLineItems) {
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = new ArrayList<>(lineItems.size());
-    lineItems.forEach(l -> lineItemDtos.add(exportToDto(l, orderables, shipmentLineItems)));
-    return lineItemDtos;
   }
 
   private ShipmentQuantityType resolveQuantityType(ProofOfDeliveryLineItem lineItem,

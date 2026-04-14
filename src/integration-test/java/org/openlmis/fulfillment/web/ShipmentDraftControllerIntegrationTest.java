@@ -237,12 +237,12 @@ public class ShipmentDraftControllerIntegrationTest extends BaseWebIntegrationTe
         .collect(Collectors.toList());
     given(orderableReferenceDataService.findByIdentities(anySetOf(VersionEntityReference.class)))
         .willReturn(orderables);
-    OrderableDto orderableDto = findOrderable(orderables, lineItem);
-    List<ShipmentLineItemDto> lineItemsDtos = exportToDto(lineItem, orderableDto);
 
     shipmentDraftDtoExpected = new ShipmentDraftDto();
     shipmentDraftDtoExpected.setServiceUrl(serviceUrl);
     shipmentDraft.export(shipmentDraftDtoExpected);
+    OrderableDto orderableDto = findOrderable(orderables, lineItem);
+    List<ShipmentLineItemDto> lineItemsDtos = exportToDto(lineItem, orderableDto);
     shipmentDraftDtoExpected.setLineItems(lineItemsDtos);
     shipmentDraftDto = new ShipmentDraftDtoDataBuilder()
         .withOrder(new OrderObjectReferenceDto(shipmentDraftDtoExpected.getOrder().getId()))
