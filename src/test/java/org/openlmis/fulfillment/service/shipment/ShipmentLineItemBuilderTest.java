@@ -49,6 +49,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class ShipmentLineItemBuilderTest {
 
+  private static final String LINE_ITEM = "lineItem";
   private static final String ORDERABLE_ID = "e3fc3cf3-da18-44b0-a220-77c985202e06";
   private static final String PRODUCT_CODE = "010101";
   private static final String PRODUCT_CODE_2 = "323232";
@@ -102,16 +103,16 @@ public class ShipmentLineItemBuilderTest {
         .withPosition(0).withNested("order")
         .withKeyPath(FileColumnKeyPath.ORDER_CODE.toString()).build();
     FileColumn orderableId = columnBuilder
-        .withPosition(1).withNested("lineItem")
+        .withPosition(1).withNested(LINE_ITEM)
         .withKeyPath(orderableField.toString()).build();
     FileColumn quantityShipped = columnBuilder
-        .withPosition(2).withNested("lineItem")
+        .withPosition(2).withNested(LINE_ITEM)
         .withKeyPath(FileColumnKeyPath.QUANTITY_SHIPPED.toString()).build();
     FileColumn batchNumber = columnBuilder
-        .withPosition(3).withNested("lineItem")
+        .withPosition(3).withNested(LINE_ITEM)
         .withKeyPath("batchNumber").build();
     FileColumn quantityType = columnBuilder
-        .withPosition(4).withNested("lineItem")
+        .withPosition(4).withNested(LINE_ITEM)
         .withKeyPath(FileColumnKeyPath.QUANTITY_TYPE.toString()).build();
 
     return templateBuilder

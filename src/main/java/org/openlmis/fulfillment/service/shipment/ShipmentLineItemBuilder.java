@@ -169,7 +169,8 @@ public class ShipmentLineItemBuilder {
     try {
       return ShipmentQuantityType.valueOf(quantityTypeString.trim().toUpperCase());
     } catch (IllegalArgumentException ex) {
-      throw new FulfillmentException("Quantity Type should be PACKS or DISPENSING_UNITS.");
+      throw new FulfillmentException(
+          ex, "Quantity Type should be PACKS or DISPENSING_UNITS.");
     }
   }
 

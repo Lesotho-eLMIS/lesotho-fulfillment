@@ -78,6 +78,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class StockEventBuilderTest {
+  private static final String SHOULD_CREATE_EVENT = "Should create an event.";
   private static final UUID POD_REASON_ID = UUID.randomUUID();
   private static final UUID SHIPMENT_REASON_ID = UUID.randomUUID();
   private static final LocalDate CURRENT_DATE = LocalDate.now();
@@ -159,7 +160,7 @@ public class StockEventBuilderTest {
 
     Optional<StockEventDto> event = stockEventBuilder.fromShipment(shipment);
 
-    assertTrue("Should create an event.", event.isPresent());
+    assertTrue(SHOULD_CREATE_EVENT, event.isPresent());
     assertThat(event.get().getFacilityId(), is(order.getSupplyingFacilityId()));
     assertThat(event.get().getProgramId(), is(order.getProgramId()));
     assertThat(event.get().getUserId(), is(shipment.getShippedById()));
@@ -212,7 +213,7 @@ public class StockEventBuilderTest {
 
     Optional<StockEventDto> event = stockEventBuilder.fromShipment(shipment);
 
-    assertTrue("Should create an event.", event.isPresent());
+    assertTrue(SHOULD_CREATE_EVENT, event.isPresent());
     assertThat(event.get().getLineItems().get(0).getQuantity(), is(500));
   }
 
@@ -229,7 +230,7 @@ public class StockEventBuilderTest {
 
     Optional<StockEventDto> event = stockEventBuilder.fromProofOfDelivery(proofOfDelivery);
 
-    assertTrue("Should create an event.", event.isPresent());
+    assertTrue(SHOULD_CREATE_EVENT, event.isPresent());
     assertThat(event.get().getFacilityId(), is(order.getReceivingFacilityId()));
     assertThat(event.get().getProgramId(), is(order.getProgramId()));
     assertThat(event.get().getUserId(), is(user.getId()));

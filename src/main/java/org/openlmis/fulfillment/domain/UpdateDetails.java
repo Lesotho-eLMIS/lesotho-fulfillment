@@ -23,12 +23,14 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 @Embeddable
 @AllArgsConstructor
 @EqualsAndHashCode
+@Getter
 @ToString
 public class UpdateDetails {
 

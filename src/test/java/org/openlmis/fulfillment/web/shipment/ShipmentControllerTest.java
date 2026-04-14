@@ -36,6 +36,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentDraft;
+import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.extension.ExtensionManager;
 import org.openlmis.fulfillment.extension.point.ExtensionPointId;
 import org.openlmis.fulfillment.extension.point.ShipmentCreatePostProcessor;
@@ -129,6 +130,20 @@ public class ShipmentControllerTest {
     ArgumentCaptor<Order> argument = ArgumentCaptor.forClass(Order.class);
     verify(orderRepository).save(argument.capture());
     assertEquals(OrderStatus.SHIPPED, argument.getValue().getStatus());
+  }
+
+  @Test
+  public void shouldFallbackToOrderUpdaterWhenCurrentUserIsMissing() {
+    UUID fallbackUserId = UUID.randomUUID();
+    ZonedDateTime updatedDate = ZonedDateTime.now();
+    order.setUpdateDetails(new UpdateDetails(fallbackUserId, updatedDate));
+    when(authenticationHelper.getCurrentUser()).thenReturn(null);
+
+    shipmentController.createShipment(shipmentDto);
+
+    ArgumentCaptor<Order> argument = ArgumentCaptor.forClass(Order.class);
+    verify(orderRepository).save(argument.capture());
+    assertEquals(fallbackUserId, argument.getValue().getUpdateDetails().getUpdaterId());
   }
 
   @Test

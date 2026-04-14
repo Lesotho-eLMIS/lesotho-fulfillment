@@ -24,6 +24,7 @@ import static org.openlmis.fulfillment.i18n.MessageKeys.SHIPMENT_ORDERLESS_NOT_S
 import static org.openlmis.fulfillment.service.ResourceNames.BASE_PATH;
 import static org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController.RESOURCE_PATH;
 
+import java.util.Optional;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -302,7 +303,11 @@ public class ShipmentDraftController extends BaseController {
 
   private void updateOrderStatus(Order order, OrderStatus status) {
     UserDto currentUser = authenticationHelper.getCurrentUser();
-    order.updateStatus(status, new UpdateDetails(currentUser.getId(),
+    UUID updaterId = currentUser != null ? currentUser.getId()
+        : Optional.ofNullable(order.getUpdateDetails())
+            .map(UpdateDetails::getUpdaterId)
+            .orElse(order.getCreatedById());
+    order.updateStatus(status, new UpdateDetails(updaterId,
         dateHelper.getCurrentDateTimeWithSystemZone()));
   }
 }
