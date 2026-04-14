@@ -25,7 +25,6 @@ import static org.openlmis.fulfillment.web.shipment.ShipmentController.RESOURCE_
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.CreationDetails;
@@ -143,13 +142,8 @@ public class ShipmentController extends BaseController {
     shipment = shipmentService.create(shipment);
 
     profiler.start("UPDATE_ORDER");
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    UUID updaterId = currentUser != null ? currentUser.getId()
-        : Optional.ofNullable(order.getUpdateDetails())
-            .map(UpdateDetails::getUpdaterId)
-            .orElse(order.getCreatedById());
     order.updateStatus(OrderStatus.SHIPPED, new UpdateDetails(
-        updaterId,
+        authenticationHelper.getCurrentUser().getId(),
         dateHelper.getCurrentDateTimeWithSystemZone()));
     orderRepository.save(order);
 
