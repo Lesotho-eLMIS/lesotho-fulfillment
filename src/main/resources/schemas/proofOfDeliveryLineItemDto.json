@@ -33,6 +33,11 @@
       "type": "integer",
       "title": "quantityRejected"
     },
+    "quantityType": {
+      "type": "string",
+      "title": "quantityType",
+      "enum": ["PACKS", "DISPENSING_UNITS"]
+    },
     "rejectionReasonId": {
       "type": "string",
       "title": "rejectionReasonId"

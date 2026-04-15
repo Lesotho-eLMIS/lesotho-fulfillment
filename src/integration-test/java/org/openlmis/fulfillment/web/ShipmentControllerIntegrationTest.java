@@ -52,6 +52,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.i18n.MessageKeys;
@@ -354,6 +355,68 @@ public class ShipmentControllerIntegrationTest extends BaseWebIntegrationTest {
     assertEquals(shipmentDtoExpected, getPageContent(response, ShipmentDto.class).get(0));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnQuantityTypeOnCreateAndGetShipment() {
+    ShipmentLineItem lineItem = new ShipmentLineItemDataBuilder()
+        .withoutId()
+        .withOrderable(UUID.randomUUID(), 1L)
+        .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+        .build();
+    shipment = generateShipment(lineItem);
+
+    orderables = shipment.getLineItems().stream()
+        .map(line -> new OrderableDataBuilder()
+            .withId(line.getOrderable().getId())
+            .withVersionNumber(line.getOrderable().getVersionNumber())
+            .build())
+        .collect(Collectors.toList());
+    given(orderableReferenceDataService.findByIdentities(anySetOf(VersionEntityReference.class)))
+        .willReturn(orderables);
+
+    OrderableDto orderableDto = findOrderable(orderables, lineItem);
+    shipmentDtoExpected = new ShipmentDto();
+    shipmentDtoExpected.setServiceUrl(serviceUrl);
+    shipmentDtoExpected.setLineItems(exportToDto(lineItem, orderableDto));
+    shipmentDto = new ShipmentDtoDataBuilder()
+        .withoutShippedBy()
+        .withoutShippedDate()
+        .withOrder(new OrderObjectReferenceDto(orderId))
+        .withLineItems(shipmentDtoExpected.lineItems())
+        .withNotes(shipment.getNotes())
+        .build();
+
+    Order shipmentOrder = shipment.getOrder();
+    shipmentOrder.setStatus(OrderStatus.ORDERED);
+    when(orderRepository.findById(shipment.getOrder().getId())).thenReturn(Optional.of(shipmentOrder));
+    when(stockEventBuilder.fromShipment(any(Shipment.class))).thenReturn(Optional.of(new StockEventDto()));
+
+    ShipmentDto created = restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .contentType(APPLICATION_JSON_VALUE)
+        .body(shipmentDto)
+        .when()
+        .post(RESOURCE_URL)
+        .then()
+        .statusCode(201)
+        .extract().as(ShipmentDto.class);
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS,
+        created.lineItems().get(0).getQuantityType());
+
+    when(shipmentRepository.findById(shipment.getId())).thenReturn(Optional.of(shipment));
+    ShipmentDto fetched = restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .pathParam("id", shipment.getId())
+        .when()
+        .get(ID_RESOURCE_URL)
+        .then()
+        .statusCode(200)
+        .extract().as(ShipmentDto.class);
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS,
+        fetched.lineItems().get(0).getQuantityType());
   }
 
   @Test

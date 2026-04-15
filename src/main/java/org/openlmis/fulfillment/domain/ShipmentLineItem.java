@@ -24,6 +24,8 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -57,6 +59,11 @@ public class ShipmentLineItem extends BaseEntity {
   @Getter(AccessLevel.PACKAGE)
   private Long quantityShipped;
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  @Getter
+  private ShipmentQuantityType quantityType;
+
   @Column(name = "extradata", columnDefinition = "jsonb")
   @Convert(converter = ExtraDataConverter.class)
   @Getter
@@ -67,12 +74,17 @@ public class ShipmentLineItem extends BaseEntity {
   }
 
   public ShipmentLineItem(VersionEntityReference orderable, Long quantityShipped) {
-    this(orderable, null, quantityShipped, null);
+    this(orderable, null, quantityShipped, ShipmentQuantityType.PACKS, null);
   }
 
   public ShipmentLineItem(VersionEntityReference orderable, Long quantityShipped,
       Map<String, String> extraData) {
-    this(orderable, null, quantityShipped, extraData);
+    this(orderable, null, quantityShipped, ShipmentQuantityType.PACKS, extraData);
+  }
+
+  public ShipmentLineItem(VersionEntityReference orderable, UUID lotId, Long quantityShipped,
+      Map<String, String> extraData) {
+    this(orderable, lotId, quantityShipped, ShipmentQuantityType.PACKS, extraData);
   }
 
   public UUID getOrderableId() {
@@ -96,6 +108,7 @@ public class ShipmentLineItem extends BaseEntity {
 
     ShipmentLineItem shipmentLineItem = new ShipmentLineItem(
         orderable, importer.getLotId(), importer.getQuantityShipped(),
+        Optional.ofNullable(importer.getQuantityType()).orElse(ShipmentQuantityType.PACKS),
         importer.getExtraData());
     shipmentLineItem.setId(importer.getId());
     return shipmentLineItem;
@@ -117,6 +130,7 @@ public class ShipmentLineItem extends BaseEntity {
     exporter.setOrderable(orderableDto);
     exporter.setLotId(lotId);
     exporter.setQuantityShipped(quantityShipped);
+    exporter.setQuantityType(quantityType);
     exporter.setExtraData(extraData);
   }
 
@@ -124,7 +138,8 @@ public class ShipmentLineItem extends BaseEntity {
    * Returns a copy of line item.
    */
   public ShipmentLineItem copy() {
-    ShipmentLineItem clone = new ShipmentLineItem(orderable, lotId, quantityShipped, extraData);
+    ShipmentLineItem clone = new ShipmentLineItem(
+        orderable, lotId, quantityShipped, quantityType, extraData);
     clone.setId(id);
 
     return clone;
@@ -140,6 +155,8 @@ public class ShipmentLineItem extends BaseEntity {
 
     void setQuantityShipped(Long quantityShipped);
 
+    void setQuantityType(ShipmentQuantityType quantityType);
+
     void setExtraData(Map<String, String> extraData);
   }
 
@@ -152,6 +169,8 @@ public class ShipmentLineItem extends BaseEntity {
     UUID getLotId();
 
     Long getQuantityShipped();
+
+    ShipmentQuantityType getQuantityType();
 
     Map<String, String> getExtraData();
   }

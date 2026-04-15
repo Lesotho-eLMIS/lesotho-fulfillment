@@ -51,6 +51,7 @@ public class ShipmentTest {
   private UUID orderableId = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private Long quantityShipped = 15L;
+  private ShipmentQuantityType quantityType = ShipmentQuantityType.DISPENSING_UNITS;
   private OrderableDto orderableDto = new OrderableDataBuilder()
       .withId(orderableId)
       .withVersionNumber(1L)
@@ -61,6 +62,7 @@ public class ShipmentTest {
           .withOrderable(orderableDto.getId(), orderableDto.getVersionNumber())
           .withLotId(lotId)
           .withQuantityShipped(quantityShipped)
+          .withQuantityType(quantityType)
           .build());
 
   @Test
@@ -69,6 +71,7 @@ public class ShipmentTest {
     DummyShipmentDto shipmentDto =
         new DummyShipmentDto(id, order, shipDetails, notes, Collections.singletonList(
             new DummyShipmentLineItemDto(lineItemId, orderableDto, lotId, quantityShipped,
+                quantityType,
                 null)), null);
 
     Shipment actual = Shipment.newInstance(shipmentDto, order);

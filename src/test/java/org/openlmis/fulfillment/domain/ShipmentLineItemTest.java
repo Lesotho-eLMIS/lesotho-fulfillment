@@ -33,6 +33,7 @@ public class ShipmentLineItemTest {
   private UUID lineItemId = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private Long quantityShipped = 15L;
+  private ShipmentQuantityType quantityType = ShipmentQuantityType.DISPENSING_UNITS;
   private Map<String, String> extraData = new HashMap<>();
 
   @Test
@@ -48,6 +49,7 @@ public class ShipmentLineItemTest {
     assertEquals(orderableDto, exporter.getOrderable());
     assertEquals(lotId, exporter.getLotId());
     assertEquals(quantityShipped, exporter.getQuantityShipped());
+    assertEquals(quantityType, exporter.getQuantityType());
     assertEquals(extraData, exporter.getExtraData());
   }
 
@@ -79,6 +81,7 @@ public class ShipmentLineItemTest {
         .withId(lineItemId)
         .withLotId(lotId)
         .withQuantityShipped(quantityShipped)
+        .withQuantityType(quantityType)
         .withExtraData(extraData)
         .build();
   }

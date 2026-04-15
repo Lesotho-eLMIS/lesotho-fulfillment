@@ -23,11 +23,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
@@ -79,13 +82,13 @@ public class ProofOfDeliveryDtoBuilder {
   private ProofOfDeliveryDto export(ProofOfDelivery pod) {
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
     dto.setServiceUrl(serviceUrl);
-    dto.setLineItems(exportToDtos(pod.getLineItems()));
+    dto.setLineItems(exportToDtos(pod));
     pod.export(dto);
     return dto;
   }
 
-  private List<ProofOfDeliveryLineItemDto> exportToDtos(List<ProofOfDeliveryLineItem> lineItems) {
-    List<ProofOfDeliveryLineItemDto> lineItemDtos = new ArrayList<>(lineItems.size());
+  private List<ProofOfDeliveryLineItemDto> exportToDtos(ProofOfDelivery pod) {
+    List<ProofOfDeliveryLineItem> lineItems = pod.getLineItems();
     Set<VersionEntityReference> orderableIdentities = new HashSet<>(lineItems.size());
 
     for (ProofOfDeliveryLineItem lineItem: lineItems) {
@@ -97,12 +100,18 @@ public class ProofOfDeliveryDtoBuilder {
             .stream()
             .collect(toMap(OrderableDto::getIdentity, identity -> identity));
 
-    lineItems.forEach(l -> lineItemDtos.add(exportToDto(l, orderables)));
+    return exportToDtos(lineItems, orderables, pod.getShipment().getLineItems());
+  }
+
+  private List<ProofOfDeliveryLineItemDto> exportToDtos(List<ProofOfDeliveryLineItem> lineItems,
+      Map<VersionIdentityDto, OrderableDto> orderables, List<ShipmentLineItem> shipmentLineItems) {
+    List<ProofOfDeliveryLineItemDto> lineItemDtos = new ArrayList<>(lineItems.size());
+    lineItems.forEach(l -> lineItemDtos.add(exportToDto(l, orderables, shipmentLineItems)));
     return lineItemDtos;
   }
 
   private ProofOfDeliveryLineItemDto exportToDto(ProofOfDeliveryLineItem lineItem,
-      Map<VersionIdentityDto, OrderableDto> orderables) {
+      Map<VersionIdentityDto, OrderableDto> orderables, List<ShipmentLineItem> shipmentLineItems) {
     ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto();
     lineItemDto.setServiceUrl(serviceUrl);
 
@@ -110,7 +119,18 @@ public class ProofOfDeliveryDtoBuilder {
         new VersionIdentityDto(lineItem.getOrderable()));
 
     lineItem.export(lineItemDto, orderableDto);
+    lineItemDto.setQuantityType(resolveQuantityType(lineItem, shipmentLineItems));
     return lineItemDto;
+  }
+
+  private ShipmentQuantityType resolveQuantityType(ProofOfDeliveryLineItem lineItem,
+      List<ShipmentLineItem> shipmentLineItems) {
+    return shipmentLineItems.stream()
+        .filter(shipped -> shipped.getOrderable().equals(lineItem.getOrderable())
+            && Objects.equals(shipped.getLotId(), lineItem.getLotId()))
+        .map(ShipmentLineItem::getQuantityType)
+        .findFirst()
+        .orElse(ShipmentQuantityType.PACKS);
   }
 
 }

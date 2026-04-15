@@ -25,6 +25,7 @@ import org.openlmis.fulfillment.OrderDataBuilder;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.testutils.ShipmentDataBuilder;
 import org.openlmis.fulfillment.testutils.ShipmentLineItemDataBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,19 @@ public class ShipmentRepositoryIntegrationTest extends BaseCrudRepositoryIntegra
     assertEquals(1, page.getNumberOfElements());
     assertEquals(1, page.getTotalElements());
     assertEquals(1, page.getTotalPages());
+  }
+
+  @Test
+  public void shouldPersistQuantityType() {
+    shipmentLineItem = new ShipmentLineItemDataBuilder()
+        .withoutId()
+        .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+        .build();
+
+    Shipment save = shipmentRepository.save(generateInstance());
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS,
+        save.getLineItems().get(0).getQuantityType());
   }
 
 }

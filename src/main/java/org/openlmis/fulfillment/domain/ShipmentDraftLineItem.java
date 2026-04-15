@@ -22,6 +22,8 @@ import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,6 +53,11 @@ public class ShipmentDraftLineItem extends BaseEntity {
 
   private Long quantityShipped;
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  @Getter
+  private ShipmentQuantityType quantityType;
+
   // Constructor needed by framework. Use all args constructor to create new instance.
   private ShipmentDraftLineItem() {}
 
@@ -70,7 +77,8 @@ public class ShipmentDraftLineItem extends BaseEntity {
         .orElse(null);
 
     ShipmentDraftLineItem shipmentLineItem = new ShipmentDraftLineItem(
-        orderable, importer.getLotId(), importer.getQuantityShipped());
+        orderable, importer.getLotId(), importer.getQuantityShipped(),
+        Optional.ofNullable(importer.getQuantityType()).orElse(ShipmentQuantityType.PACKS));
     shipmentLineItem.setId(importer.getId());
     return shipmentLineItem;
   }
@@ -85,13 +93,15 @@ public class ShipmentDraftLineItem extends BaseEntity {
     this.orderable = newItem.orderable;
     this.lotId = newItem.lotId;
     this.quantityShipped = newItem.quantityShipped;
+    this.quantityType = newItem.quantityType;
   }
 
   /**
    * Returns a copy of line item.
    */
   public ShipmentDraftLineItem copy() {
-    ShipmentDraftLineItem clone = new ShipmentDraftLineItem(orderable, lotId, quantityShipped);
+    ShipmentDraftLineItem clone = new ShipmentDraftLineItem(
+        orderable, lotId, quantityShipped, quantityType);
     clone.setId(id);
 
     return clone;
@@ -106,5 +116,6 @@ public class ShipmentDraftLineItem extends BaseEntity {
     exporter.setOrderable(orderableDto);
     exporter.setLotId(lotId);
     exporter.setQuantityShipped(quantityShipped);
+    exporter.setQuantityType(quantityType);
   }
 }

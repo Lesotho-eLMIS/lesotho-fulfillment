@@ -29,6 +29,7 @@ public class ShipmentDraftLineItemTest {
   private UUID lineItemId = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private Long quantityShipped = 15L;
+  private ShipmentQuantityType quantityType = ShipmentQuantityType.DISPENSING_UNITS;
   OrderableDto orderableDto = new OrderableDataBuilder()
       .withId(UUID.randomUUID())
       .withVersionNumber(1L)
@@ -49,6 +50,7 @@ public class ShipmentDraftLineItemTest {
     assertEquals(orderableDto, exporter.getOrderable());
     assertEquals(lotId, exporter.getLotId());
     assertEquals(quantityShipped, exporter.getQuantityShipped());
+    assertEquals(quantityType, exporter.getQuantityType());
   }
 
   private ShipmentDraftLineItem createShipmentLineItem() {
@@ -57,6 +59,7 @@ public class ShipmentDraftLineItemTest {
         .withLotId(lotId)
         .withOrderable(orderableDto.getId(), orderableDto.getVersionNumber())
         .withQuantityShipped(quantityShipped)
+        .withQuantityType(quantityType)
         .build();
   }
 

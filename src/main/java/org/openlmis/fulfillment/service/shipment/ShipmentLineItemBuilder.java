@@ -25,6 +25,7 @@ import static org.openlmis.fulfillment.util.FileColumnKeyPath.ORDERABLE_COLUMN_P
 import static org.openlmis.fulfillment.util.FileColumnKeyPath.ORDER_COLUMN_PATHS;
 import static org.openlmis.fulfillment.util.FileColumnKeyPath.PRODUCT_CODE;
 import static org.openlmis.fulfillment.util.FileColumnKeyPath.QUANTITY_SHIPPED_PATHS;
+import static org.openlmis.fulfillment.util.FileColumnKeyPath.QUANTITY_TYPE_PATHS;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.openlmis.fulfillment.domain.FileColumn;
 import org.openlmis.fulfillment.domain.FileTemplate;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.FulfillmentException;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -61,6 +63,7 @@ public class ShipmentLineItemBuilder {
     FileColumn orderableColumn = template.findColumn(ORDERABLE_COLUMN_PATHS).orElse(null);
     FileColumn orderColumn = template.findColumn(ORDER_COLUMN_PATHS).orElse(null);
     FileColumn quantityShippedColumn = template.findColumn(QUANTITY_SHIPPED_PATHS).orElse(null);
+    FileColumn quantityTypeColumn = template.findColumn(QUANTITY_TYPE_PATHS).orElse(null);
 
     if (orderColumn == null || orderableColumn == null || quantityShippedColumn == null) {
       throw new FulfillmentException(
@@ -81,6 +84,7 @@ public class ShipmentLineItemBuilder {
         .stream()
         .filter(column -> !ALL_REQUIRED_COLUMN_PATHS
             .contains(column.getFileColumnKeyPathEnum())
+            && !QUANTITY_TYPE_PATHS.contains(column.getFileColumnKeyPathEnum())
             && LINE_ITEM.equals(column.getNested()))
         .collect(toList());
 
@@ -101,11 +105,12 @@ public class ShipmentLineItemBuilder {
       validateOrderableAndQuantity(orderable, quantityShippedString);
 
       Long quantityShipped = parseLong(quantityShippedString);
+      ShipmentQuantityType quantityType = parseQuantityType(quantityTypeColumn, row);
       Map<String, String> extraData = extractExtraData(extraDataFields, row);
 
       ShipmentLineItem lineItem = new ShipmentLineItem(
           new VersionEntityReference(orderable.getId(), orderable.getVersionNumber()),
-          quantityShipped, extraData);
+          null, quantityShipped, quantityType, extraData);
       result.addLineItem(lineItem);
     }
     return result;
@@ -149,6 +154,24 @@ public class ShipmentLineItemBuilder {
       }
     }
     return extraData;
+  }
+
+  private ShipmentQuantityType parseQuantityType(FileColumn quantityTypeColumn, CSVRecord row) {
+    if (quantityTypeColumn == null) {
+      return ShipmentQuantityType.PACKS;
+    }
+
+    String quantityTypeString = row.get(quantityTypeColumn.getPosition());
+    if (isEmpty(quantityTypeString)) {
+      return ShipmentQuantityType.PACKS;
+    }
+
+    try {
+      return ShipmentQuantityType.valueOf(quantityTypeString.trim().toUpperCase());
+    } catch (IllegalArgumentException ex) {
+      throw new FulfillmentException(
+          ex, "Quantity Type should be PACKS or DISPENSING_UNITS.");
+    }
   }
 
 }

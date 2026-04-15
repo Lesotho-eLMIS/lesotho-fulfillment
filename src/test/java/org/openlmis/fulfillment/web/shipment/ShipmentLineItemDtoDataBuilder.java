@@ -15,6 +15,7 @@
 
 package org.openlmis.fulfillment.web.shipment;
 
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.testutils.OrderableDataBuilder;
 import org.openlmis.fulfillment.testutils.ShipmentLineItemDataBuilder;
@@ -41,6 +42,11 @@ public class ShipmentLineItemDtoDataBuilder {
 
   public ShipmentLineItemDtoDataBuilder withQuantityShipped(Long quantityShipped) {
     shipmentLineItemDto.setQuantityShipped(quantityShipped);
+    return this;
+  }
+
+  public ShipmentLineItemDtoDataBuilder withQuantityType(ShipmentQuantityType quantityType) {
+    shipmentLineItemDto.setQuantityType(quantityType);
     return this;
   }
 

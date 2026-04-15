@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.testutils.ToStringTestUtils;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 
@@ -63,6 +64,15 @@ public class ShipmentLineItemDtoTest {
         .build();
 
     assertNull(shipmentLineItemDto.getLotId());
+  }
+
+  @Test
+  public void shouldGetQuantityType() {
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDtoDataBuilder()
+        .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+        .build();
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS, shipmentLineItemDto.getQuantityType());
   }
 
 }

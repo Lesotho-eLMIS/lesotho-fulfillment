@@ -54,6 +54,8 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentQuantityType;
 import org.openlmis.fulfillment.domain.Template;
 import org.openlmis.fulfillment.domain.TemplateParameter;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
@@ -311,6 +313,46 @@ public class ProofOfDeliveryControllerIntegrationTest extends BaseWebIntegration
     verify(fulfillmentNotificationService, never())
         .sendPodConfirmedNotification(any(ProofOfDelivery.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnQuantityTypeInProofOfDeliveryResponse() {
+    UUID orderableId = UUID.randomUUID();
+    Long versionNumber = 1L;
+    UUID lotId = UUID.randomUUID();
+    ShipmentLineItem shipmentLineItem = new org.openlmis.fulfillment.testutils.ShipmentLineItemDataBuilder()
+        .withOrderable(orderableId, versionNumber)
+        .withLotId(lotId)
+        .withQuantityType(ShipmentQuantityType.DISPENSING_UNITS)
+        .build();
+    ProofOfDeliveryLineItem podLineItem = new ProofOfDeliveryLineItemDataBuilder()
+        .withOrderable(orderableId, versionNumber)
+        .withoutQuantities()
+        .withoutReason()
+        .withoutVvmStatus()
+        .build();
+    org.springframework.test.util.ReflectionTestUtils.setField(podLineItem, "lotId", lotId);
+    proofOfDelivery = new ProofOfDeliveryDataBuilder()
+        .withShipment(new org.openlmis.fulfillment.testutils.ShipmentDataBuilder()
+            .withLineItems(singletonList(shipmentLineItem))
+            .build())
+        .withLineItems(singletonList(podLineItem))
+        .build();
+    lineItem = podLineItem;
+    setUp();
+
+    ProofOfDeliveryDto response = restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .pathParam("id", proofOfDelivery.getId())
+        .when()
+        .get(ID_URL)
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(ProofOfDeliveryDto.class);
+
+    assertEquals(ShipmentQuantityType.DISPENSING_UNITS,
+        response.lineItems().get(0).getQuantityType());
   }
 
   @Test
@@ -689,6 +731,7 @@ public class ProofOfDeliveryControllerIntegrationTest extends BaseWebIntegration
     ProofOfDeliveryLineItemDto lineItemDto = new ProofOfDeliveryLineItemDto();
     lineItemDto.setServiceUrl(serviceUrl);
     lineItem.export(lineItemDto, orderable);
+    lineItemDto.setQuantityType(ShipmentQuantityType.PACKS);
 
     return singletonList(lineItemDto);
   }

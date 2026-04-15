@@ -46,6 +46,7 @@ public class ShipmentDraftTest {
   private UUID lineItemId = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private Long quantityShipped = 15L;
+  private ShipmentQuantityType quantityType = ShipmentQuantityType.DISPENSING_UNITS;
   private Map<String, String> extraData = new HashMap<>();
   private OrderableDto orderableDto = new OrderableDataBuilder()
       .withId(UUID.randomUUID())
@@ -57,6 +58,7 @@ public class ShipmentDraftTest {
           .withOrderable(orderableDto.getId(), orderableDto.getVersionNumber())
           .withLotId(lotId)
           .withQuantityShipped(quantityShipped)
+          .withQuantityType(quantityType)
           .build());
 
   @Test
@@ -65,6 +67,7 @@ public class ShipmentDraftTest {
     DummyShipmentDraftDto shipmentDraftDto = new DummyShipmentDraftDto(id, order, notes,
         Collections.singletonList(
             new DummyShipmentLineItemDto(lineItemId, orderableDto, lotId, quantityShipped,
+                quantityType,
                 extraData)));
 
     ShipmentDraft actual = ShipmentDraft.newInstance(shipmentDraftDto);
