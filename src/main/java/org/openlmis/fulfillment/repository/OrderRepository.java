@@ -30,7 +30,7 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, UUID>
 
   Order findByExternalId(@Param("externalId") UUID externalId);
 
-  Long countByFacilityIdAndStatus(UUID facilityId, OrderStatus status);
+  Long countByFacilityIdAndStatusAndArchivedFalse(UUID facilityId, OrderStatus status);
 
   List<Order> findByIdInAndStatus(List<UUID> ids, OrderStatus status);
 }

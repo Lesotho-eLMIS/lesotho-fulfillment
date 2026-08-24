@@ -609,4 +609,22 @@ public class OrderController extends BaseController {
     profiler.stop().log();
     XLOGGER.exit(exitArgs);
   }
+
+  /**
+   * Archives an order so that it no longer appears in order searches. The order and all
+   * its related data are retained in the database.
+   *
+   * @param orderId UUID of the order to archive
+   */
+  @PutMapping("/orders/{id}/archive")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void archiveOrder(@PathVariable("id") UUID orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+    permissionService.canEditOrder(order);
+
+    order.setArchived(true);
+    orderRepository.save(order);
+  }
 }

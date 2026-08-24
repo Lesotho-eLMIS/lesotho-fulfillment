@@ -491,7 +491,7 @@ public class OrderServiceTest {
 
     // then
     verify(orderRepository, times(numberOfStatuses))
-        .countByFacilityIdAndStatus(anyObject(), anyObject());
+        .countByFacilityIdAndStatusAndArchivedFalse(anyObject(), anyObject());
     assertEquals(userDto.getHomeFacilityId(), result.getFacilityId());
     assertEquals(numberOfStatuses, result.getStatusesStats().size());
   }

@@ -182,7 +182,8 @@ public class OrderDataBuilder {
    */
   public Order build() {
     Order order = new Order(
-        externalId, emergency, facilityId, processingPeriodId, createdDate, createdById, programId,
+        externalId, emergency, false, facilityId, processingPeriodId, createdDate, createdById,
+        programId,
         requestingFacilityId, receivingFacilityId, supplyingFacilityId, orderCode, status,
         quotedCost, orderLineItems, statusMessages, statusChanges, updateDetails,extraData
     );

@@ -15,6 +15,7 @@
 
 package org.openlmis.fulfillment.repository.custom.impl;
 
+import static org.openlmis.fulfillment.domain.Order.ARCHIVED;
 import static org.openlmis.fulfillment.domain.Order.ORDER_STATUS;
 import static org.openlmis.fulfillment.domain.Order.PROCESSING_PERIOD_ID;
 import static org.openlmis.fulfillment.domain.Order.PROGRAM_ID;
@@ -199,6 +200,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     predicate = isEqual(PROGRAM_ID, params.getProgramId(), root, predicate, builder);
     predicate = isOneOf(PROCESSING_PERIOD_ID, processingPeriodIds, root, predicate, builder);
     predicate = isOneOf(ORDER_STATUS, params.getStatusAsEnum(), root, predicate, builder);
+    predicate = builder.and(predicate, builder.isFalse(root.get(ARCHIVED)));
 
     if (params.getRequisitionless() != null) {
       predicate = Boolean.TRUE.equals(params.getRequisitionless())

@@ -291,7 +291,7 @@ public class OrderService {
     for (OrderStatus status : OrderStatus.values()) {
       statusesStats.put(
           status.name(),
-          orderRepository.countByFacilityIdAndStatus(facilityId, status)
+          orderRepository.countByFacilityIdAndStatusAndArchivedFalse(facilityId, status)
       );
     }
     OrderStatsData orderStatsData = new OrderStatsData();

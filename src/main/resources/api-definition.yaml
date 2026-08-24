@@ -422,6 +422,24 @@ resourceTypes:
               application/json:
                 schema: localizedMessage
     /{id}:
+      /archive:
+        put:
+          is: [ secured ]
+          description: >
+            Archives an order so it no longer appears in order searches. The order
+            is retained in the database. This endpoint requires ORDERS_EDIT right.
+          responses:
+            "204":
+              headers:
+                Keep-Alive:
+            "403":
+              body:
+                application/json:
+                  schema: localizedMessage
+            "404":
+              body:
+                application/json:
+                  schema: localizedMessage
       uriParameters:
         id:
           displayName: id
