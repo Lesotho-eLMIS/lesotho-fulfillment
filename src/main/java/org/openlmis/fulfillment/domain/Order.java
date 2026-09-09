@@ -63,6 +63,7 @@ public class Order extends BaseEntity {
   public static final String ORDER_STATUS = "status";
   public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
   public static final String CREATED_DATE = "createdDate";
+  public static final String ARCHIVED = "archived";
 
 
   @Column(unique = true)
@@ -75,6 +76,11 @@ public class Order extends BaseEntity {
   @Getter
   @Setter
   private Boolean emergency;
+
+  @Column(nullable = false)
+  @Getter
+  @Setter
+  private Boolean archived = false;
 
   @Getter
   @Setter
